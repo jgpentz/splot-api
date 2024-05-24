@@ -37,12 +37,22 @@ async def process_sparams(files: List[UploadFile] = File(...)):
         s_dict['n'] = s.n.data.tolist()
 
         # Clean up frequency
-        s_dict['frequency'] = (s.frequency.data / 1e9).tolist()
+        # s_dict['frequency'] = (s.frequency.data / 1e9).tolist()
+        # s_dict['data'] = []
+        # s_dict['data'].append()
 
         # Pull out all of the Smn permutations into their own key value pair
         for m in s.m.data:
             for n in s.n.data:
+                # Select the data for the current permutation
+                a = s.sel(m=m, n=n)
                 s_dict[f's{m}{n}'] = s.sel(m=m, n=n).data.tolist()
+                s_dict[f's{m}{n}'] = {'name': f'{fname} s{m}{n}', 'data': []}
+
+                # Store all of the data as a (freq, data) pair
+                for freq, db in zip((a.frequency.data / 1e9), a.data):
+                    data = {'frequency': freq, 'value': db}
+                    s_dict[f's{m}{n}']['data'].append(data)
 
         # Store the data in the final json
         processed_data[fname] = s_dict
