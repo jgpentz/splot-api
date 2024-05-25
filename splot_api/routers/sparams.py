@@ -7,16 +7,17 @@ import tempfile
 import rftools as rf
 
 # Generate a route for processing sparams
-router= APIRouter()
+router = APIRouter()
+
 
 # Process the sparam files
-@router.post('/sparams', tags=['sparams'])
+@router.post("/sparams", tags=["sparams"])
 async def process_sparams(files: List[UploadFile] = File(...)):
     processed_data = {}
     for file in files:
         file_contents = await file.read()
         fname = file.filename
-        fext = fname.split('.')[-1]
+        fext = fname.split(".")[-1]
 
         # Create a temporary file without extension
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
@@ -24,7 +25,7 @@ async def process_sparams(files: List[UploadFile] = File(...)):
             temp_file_path = temp_file.name
 
         # Rename file to include the snp extension
-        final_temp_file_path = f'{temp_file.name}.{fext}'
+        final_temp_file_path = f"{temp_file.name}.{fext}"
         os.rename(temp_file_path, final_temp_file_path)
 
         # Read the s params, convert complex voltage to dB, store in dict
@@ -33,8 +34,8 @@ async def process_sparams(files: List[UploadFile] = File(...)):
         s_dict = s.to_dict()
 
         # Change m and n keys to contain a list of the data
-        s_dict['m'] = s.m.data.tolist()
-        s_dict['n'] = s.n.data.tolist()
+        s_dict["m"] = s.m.data.tolist()
+        s_dict["n"] = s.n.data.tolist()
 
         # Clean up frequency
         # s_dict['frequency'] = (s.frequency.data / 1e9).tolist()
@@ -46,23 +47,24 @@ async def process_sparams(files: List[UploadFile] = File(...)):
             for n in s.n.data:
                 # Select the data for the current permutation
                 a = s.sel(m=m, n=n)
-                s_dict[f's{m}{n}'] = s.sel(m=m, n=n).data.tolist()
-                s_dict[f's{m}{n}'] = {'name': f'{fname} s{m}{n}', 'data': []}
+                s_dict[f"s{m}{n}"] = s.sel(m=m, n=n).data.tolist()
+                s_dict[f"s{m}{n}"] = {"name": f"{fname} s{m}{n}", "data": [], "hide": False}
 
                 # Store all of the data as a (freq, data) pair
                 for freq, db in zip((a.frequency.data / 1e9), a.data):
-                    data = {'frequency': freq, 'value': db}
-                    s_dict[f's{m}{n}']['data'].append(data)
+                    data = {"frequency": freq, "value": db}
+                    s_dict[f"s{m}{n}"]["data"].append(data)
+        s_dict["del"] = False
 
         # Store the data in the final json
         processed_data[fname] = s_dict
 
         # Remove unused info
-        del s_dict['dims']
-        del s_dict['attrs']
-        del s_dict['data']
-        del s_dict['coords']
-        del s_dict['name']
+        del s_dict["dims"]
+        del s_dict["attrs"]
+        del s_dict["data"]
+        del s_dict["coords"]
+        del s_dict["name"]
 
         # Delete the temp file
         os.remove(final_temp_file_path)
