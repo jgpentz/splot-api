@@ -1,10 +1,10 @@
 from fastapi import APIRouter, UploadFile, File
-from pydantic import BaseModel
 from typing import List
 import os
 import tempfile
 
-import rftools as rf
+from internals import read_touchstone
+from internals.conversions import coordinate
 
 # Generate a route for processing sparams
 router = APIRouter()
@@ -29,9 +29,10 @@ async def process_sparams(files: List[UploadFile] = File(...)):
         os.rename(temp_file_path, final_temp_file_path)
 
         # Read the s params, convert complex voltage to dB, store in dict
-        _, s = rf.read_touchstone(final_temp_file_path, xarray=True)
-        s = rf.v2db(s)
+        _, s = read_touchstone(final_temp_file_path, xarray=True)
+        s = coordinate.v2db(s)
         s_dict = s.to_dict()
+        print(s_dict)
 
         # Change m and n keys to contain a list of the data
         s_dict["m"] = s.m.data.tolist()
