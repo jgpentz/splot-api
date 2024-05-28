@@ -10,8 +10,9 @@ setup(
     install_requires=[
         "fastapi",
         "numpy",
-        "frf-rftools",
+        "scipy",
         "uvicorn",
+        "xarray",
         "rich_click",
     ],
     include_package_data=True,
@@ -28,7 +29,6 @@ setup(
             "splot_api = splot_api.cli:cli",
         ],
     },
-
     version="0.1.0",
     zip_safe=False,
 )
