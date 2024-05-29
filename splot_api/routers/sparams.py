@@ -4,7 +4,7 @@ import os
 import tempfile
 
 from internals import read_touchstone
-from internals.conversions import coordinate
+from internals.conversions.db import v2db
 
 # Generate a route for processing sparams
 router = APIRouter()
@@ -30,7 +30,7 @@ async def process_sparams(files: List[UploadFile] = File(...)):
 
         # Read the s params, convert complex voltage to dB, store in dict
         _, s = read_touchstone(final_temp_file_path, xarray=True)
-        s = coordinate.v2db(s)
+        s = v2db(s)
         s_dict = s.to_dict()
         print(s_dict)
 
@@ -53,7 +53,7 @@ async def process_sparams(files: List[UploadFile] = File(...)):
 
                 # Store all of the data as a (freq, data) pair
                 for freq, db in zip((a.frequency.data / 1e9), a.data):
-                    data = {"frequency": freq, "value": db}
+                    data = {"frequency": freq, "value": db.round(decimals=2)}
                     s_dict[f"s{m}{n}"]["data"].append(data)
         s_dict["del"] = False
 
